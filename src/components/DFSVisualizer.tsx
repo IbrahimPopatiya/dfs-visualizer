@@ -405,86 +405,96 @@ export default function DFSVisualizer() {
         Depth-First Search — Step by Step Visualization
       </p>
 
-      <div className="flex flex-col lg:flex-row gap-8 items-start w-full max-w-5xl">
-        {/* Graph */}
-        <div className="flex-1 flex flex-col items-center">
-          <div className="bg-card rounded-2xl p-6 shadow-lg border border-border">
-            <svg width="440" height="380" viewBox="0 0 440 380">
-              {EDGES.map(([from, to]) => (
-                <GraphEdge
-                  key={`${from}-${to}`}
-                  from={from}
-                  to={to}
-                  isHighlighted={step.visited.has(from) && step.visited.has(to)}
-                />
-              ))}
-              {Object.entries(NODE_POSITIONS).map(([id, pos]) => (
-                <GraphNode
-                  key={id}
-                  id={id}
-                  x={pos.x}
-                  y={pos.y}
-                  isVisited={step.visited.has(id)}
-                  isCurrent={step.current === id}
-                  isStart={id === "a"}
-                />
-              ))}
-            </svg>
-          </div>
+      {(() => {
+        const arrows = FlowArrows({ action: step.action });
+        return (
+          <div className="flex flex-col lg:flex-row gap-4 items-center w-full max-w-5xl">
+            {/* Graph */}
+            <div className="flex-1 flex flex-col items-center">
+              <div className="bg-card rounded-2xl p-6 shadow-lg border border-border relative">
+                <div className="absolute -top-3 left-4 bg-accent text-accent-foreground px-3 py-0.5 rounded-full font-mono text-xs font-bold">
+                  Graph
+                </div>
+                <svg width="440" height="380" viewBox="0 0 440 380">
+                  {EDGES.map(([from, to]) => (
+                    <GraphEdge
+                      key={`${from}-${to}`}
+                      from={from}
+                      to={to}
+                      isHighlighted={step.visited.has(from) && step.visited.has(to)}
+                    />
+                  ))}
+                  {Object.entries(NODE_POSITIONS).map(([id, pos]) => (
+                    <GraphNode
+                      key={id}
+                      id={id}
+                      x={pos.x}
+                      y={pos.y}
+                      isVisited={step.visited.has(id)}
+                      isCurrent={step.current === id}
+                      isStart={id === "a"}
+                    />
+                  ))}
+                </svg>
+              </div>
+              <div className="mt-4 flex items-center gap-3">
+                <span className="text-muted-foreground font-mono text-sm">Current Node:</span>
+                <AnimatePresence mode="wait">
+                  {step.current ? (
+                    <motion.span
+                      key={step.current}
+                      initial={{ scale: 0, rotate: -180 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      exit={{ scale: 0, rotate: 180 }}
+                      className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-mono font-bold text-xl"
+                    >
+                      {step.current}
+                    </motion.span>
+                  ) : (
+                    <motion.span key="none" className="text-muted-foreground font-mono">—</motion.span>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
 
-          {/* Current Node */}
-          <div className="mt-4 flex items-center gap-3">
-            <span className="text-muted-foreground font-mono text-sm">Current Node:</span>
-            <AnimatePresence mode="wait">
-              {step.current ? (
-                <motion.span
-                  key={step.current}
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  exit={{ scale: 0, rotate: 180 }}
-                  className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-mono font-bold text-xl"
-                >
-                  {step.current}
-                </motion.span>
-              ) : (
-                <motion.span
-                  key="none"
-                  className="text-muted-foreground font-mono"
-                >
-                  —
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
+            {/* Flow arrow: Graph → Stack */}
+            <div className="hidden lg:flex flex-col items-center justify-start pt-24">
+              {arrows.graphToStack}
+            </div>
 
-        {/* Right side: Stack + Output */}
-        <div className="flex flex-col items-center gap-6">
-          <StackVisual stack={step.stack} />
-
-          {/* Output */}
-          <div className="flex flex-col items-center">
-            <h3 className="text-secondary font-bold text-lg mb-2 font-mono">Output</h3>
-            <div className="bg-card rounded-xl border border-border px-4 py-3 min-w-[180px] min-h-[48px] flex items-center gap-1 flex-wrap justify-center">
-              <AnimatePresence>
-                {step.printed.map((node, i) => (
-                  <motion.span
-                    key={`${node}-${i}`}
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-primary text-primary-foreground font-mono font-bold text-base"
-                  >
-                    {node}
-                  </motion.span>
-                ))}
-              </AnimatePresence>
-              {step.printed.length === 0 && (
-                <span className="text-muted-foreground font-mono text-sm italic">empty</span>
-              )}
+            {/* Right side: Stack + arrows + Output */}
+            <div className="flex flex-col items-center gap-2">
+              <StackVisual stack={step.stack} />
+              <div className="flex flex-col items-center">
+                {arrows.stackToCurrent}
+              </div>
+              <div className="flex flex-col items-center">
+                <h3 className="text-secondary font-bold text-lg mb-2 font-mono">Output</h3>
+                <div className="bg-card rounded-xl border border-border px-4 py-3 min-w-[180px] min-h-[48px] flex items-center gap-1 flex-wrap justify-center relative">
+                  <div className="absolute -top-3 right-3 bg-primary text-primary-foreground px-2 py-0.5 rounded-full font-mono text-[10px] font-bold">
+                    Printed
+                  </div>
+                  <AnimatePresence>
+                    {step.printed.map((node, i) => (
+                      <motion.span
+                        key={`${node}-${i}`}
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-primary text-primary-foreground font-mono font-bold text-base"
+                      >
+                        {node}
+                      </motion.span>
+                    ))}
+                  </AnimatePresence>
+                  {step.printed.length === 0 && (
+                    <span className="text-muted-foreground font-mono text-sm italic">empty</span>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        );
+      })()}
 
       {/* Description */}
       <AnimatePresence mode="wait">
