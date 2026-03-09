@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import FlowArrows from "./FlowArrows";
 
 // Graph definition matching the reference images
 // a -> c, b; b -> d; c -> e; d -> f
